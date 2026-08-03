@@ -41,3 +41,20 @@ def create_student(student: StudentCreate):
     students.append(new_student)
 
     return new_student
+
+@router.post("/students")
+def create_student(student: StudentCreate):
+
+    new_student = {
+        "id": len(students) + 1,
+        "nome": student.nome,
+        "idade": student.idade,
+        "objetivo": student.objetivo
+    }
+
+    students.append(new_student)
+
+    return {
+        "mensagem": "Aluno cadastrado com sucesso!",
+        "aluno": new_student
+    }
