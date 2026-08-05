@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 router = APIRouter()
@@ -58,3 +58,14 @@ def create_student(student: StudentCreate):
         "mensagem": "Aluno cadastrado com sucesso!",
         "aluno": new_student
     }
+@router.get("/students/{student_id}")
+def get_student(student_id: int):
+
+    for student in students:
+        if student["id"] == student_id:
+            return student
+
+    raise HTTPException(
+        status_code=404,
+        detail="Aluno não encontrado"
+    )
