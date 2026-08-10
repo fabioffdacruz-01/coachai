@@ -86,3 +86,19 @@ def update_student(student_id: int, student: StudentCreate):
         status_code=404,
         detail="Aluno não encontrado"
     )
+
+@router.delete("/students/{student_id}")
+def delete_student(student_id: int):
+    for student_data in students:
+        if student_data["id"] == student_id:
+            students.remove(student_data)
+
+            return {
+                "mensagem": "Aluno removido com sucesso!"
+            }
+
+    raise HTTPException(
+        status_code=404,
+        detail="Aluno não encontrado"
+    )
+    

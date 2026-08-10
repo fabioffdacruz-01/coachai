@@ -1,6 +1,5 @@
 from fastapi import FastAPI
-from backend.app.routers import students
-
+from app.routers import students
 app = FastAPI(
     title="CoachAI",
     description="API da plataforma CoachAI",
