@@ -69,3 +69,20 @@ def get_student(student_id: int):
         status_code=404,
         detail="Aluno não encontrado"
     )
+
+@router.put("/students/{student_id}")
+def update_student(student_id: int, student: StudentCreate):
+
+        for student_data in students:
+            if student_data["id"] == student_id:
+
+               student_data["nome"] = student.nome
+               student_data["idade"] = student.idade
+               student_data["objetivo"] = student.objetivo
+
+               return student_data
+
+            raise HTTPException(
+        status_code=404,
+        detail="Aluno não encontrado"
+    )
