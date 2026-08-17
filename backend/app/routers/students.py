@@ -1,8 +1,17 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+from sqlalchemy.orm import Session
+from fastapi import Depends
 
+from app.database.connection import SessionLocal
+from app.models.student import Student
 router = APIRouter()
-
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 class StudentCreate(BaseModel):
     nome: str
@@ -27,78 +36,82 @@ students = [
 
 
 @router.get("/students")
-def list_students():
-    return students
+def list_students(db: Session = Depends(get_db)):
+    return db.query(Student).all()
 
 
 @router.post("/students", status_code=201)
-def create_student(student: StudentCreate):
-    new_student = {
-        "id": len(students) + 1,
-        **student.model_dump(),
-    }
+def create_student(
+    student: StudentCreate,
+    db: Session = Depends(get_db)
+):
+    new_student = Student(
+        nome=student.nome,
+        idade=student.idade,
+        objetivo=student.objetivo
+    )
 
-    students.append(new_student)
+    db.add(new_student)
+    db.commit()
+    db.refresh(new_student)
 
     return new_student
 
-@router.post("/students")
-def create_student(student: StudentCreate):
-
-    new_student = {
-        "id": len(students) + 1,
-        "nome": student.nome,
-        "idade": student.idade,
-        "objetivo": student.objetivo
-    }
-
-    students.append(new_student)
-
-    return {
-        "mensagem": "Aluno cadastrado com sucesso!",
-        "aluno": new_student
-    }
 @router.get("/students/{student_id}")
-def get_student(student_id: int):
+def get_student(
+    student_id: int,
+    db: Session = Depends(get_db)
+):
+    student = db.query(Student).filter(Student.id == student_id).first()
 
-    for student in students:
-        if student["id"] == student_id:
-            return student
+    if student is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Aluno não encontrado"
+        )
 
-    raise HTTPException(
-        status_code=404,
-        detail="Aluno não encontrado"
-    )
+    return student
 
 @router.put("/students/{student_id}")
-def update_student(student_id: int, student: StudentCreate):
+def update_student(
+    student_id: int,
+    student: StudentCreate,
+    db: Session = Depends(get_db)
+):
+    student_data = db.query(Student).filter(Student.id == student_id).first()
 
-        for student_data in students:
-            if student_data["id"] == student_id:
+    if student_data is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Aluno não encontrado"
+        )
 
-               student_data["nome"] = student.nome
-               student_data["idade"] = student.idade
-               student_data["objetivo"] = student.objetivo
+    student_data.nome = student.nome
+    student_data.idade = student.idade
+    student_data.objetivo = student.objetivo
 
-               return student_data
+    db.commit()
+    db.refresh(student_data)
 
-            raise HTTPException(
-        status_code=404,
-        detail="Aluno não encontrado"
-    )
+    return student_data
 
 @router.delete("/students/{student_id}")
-def delete_student(student_id: int):
-    for student_data in students:
-        if student_data["id"] == student_id:
-            students.remove(student_data)
+def delete_student(
+    student_id: int,
+    db: Session = Depends(get_db)
+):
+    student_data = db.query(Student).filter(Student.id == student_id).first()
 
-            return {
-                "mensagem": "Aluno removido com sucesso!"
-            }
+    if student_data is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Aluno não encontrado"
+        )
 
-    raise HTTPException(
-        status_code=404,
-        detail="Aluno não encontrado"
-    )
+    db.delete(student_data)
+    db.commit()
+
+    return {
+        "mensagem": "Aluno removido com sucesso!"
+    }
     
