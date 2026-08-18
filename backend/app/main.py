@@ -1,5 +1,8 @@
 from fastapi import FastAPI
 from app.routers import students
+from app.database.connection import Base, engine
+from app.models import student, workout
+Base.metadata.create_all(bind=engine)
 app = FastAPI(
     title="CoachAI",
     description="API da plataforma CoachAI",
